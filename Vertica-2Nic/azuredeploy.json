@@ -144,7 +144,7 @@
             "autoUpgradeMinorVersion": true,
             "settings": {
               "fileUris": [
-                "[concat(parameters('_artifactsLocation'), '/', variables('configurescriptScriptFolder'), '/', variables('configurescriptScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+                "https://raw.githubusercontent.com/mahedley/vertica-2nic/master/Vertica-2Nic/CustomScripts/configurescript.sh"
               ],
               "commandToExecute": "[concat('sh ', variables('configurescriptScriptFileName'))]"
             }
