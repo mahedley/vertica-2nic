@@ -3,7 +3,7 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "vmsize": {
-      "value": "DS15_V2"
+      "value": "GS3"
     },
     "adminUser": {
       "value": "mdh"
