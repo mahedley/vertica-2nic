@@ -71,9 +71,13 @@
       },
       "dependsOn": [
         "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('fenicprefix'),copyIndex()))]",
-        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('benicprefix'),copyIndex()))]"
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('benicprefix'),copyIndex()))]",
+        "[concat('Microsoft.Compute/availabilitySets/', 'VerticaAV')]"
       ],
       "properties": {
+        "availabilitySet": {
+          "id": "[resourceId('Microsoft.Compute/availabilitySets','VerticaAV')]"
+        },
         "osProfile": {
           "computerName": "[concat(variables('vmnameprefix'),copyIndex())]",
           "adminUsername": "[parameters('adminUser')]",
@@ -111,7 +115,7 @@
           "networkInterfaces": [
             {
               "properties": {
-                "primary":  true
+                "primary": true
               },
               "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('fenicprefix'),copyIndex()))]"
             },
@@ -197,7 +201,28 @@
           }
         ]
       }
+    },
+   {
+
+      "apiVersion": "2016-04-30-preview",
+
+      "type": "Microsoft.Compute/availabilitySets",
+
+      "name": "VerticaAV",
+
+      "location": "[resourceGroup().location]",
+
+    "properties": {
+
+      "platformFaultDomainCount": "2",
+
+      "platformUpdateDomainCount": "2",
+
+      "managed": "true"
+
     }
+
+    },
 
 
 
