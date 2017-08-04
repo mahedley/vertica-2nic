@@ -4,7 +4,7 @@
 
 You need to pass the following parameters to the script  
   
-vmsize: The VM Size to provision this should be either DS15_V2, or GS3  
+vmsize: The VM Size to provision this should be either DS15_V2, or GS3 (Use capitalization as shown)
   
 adminuser: The name of the user used to connect remotely  
   
