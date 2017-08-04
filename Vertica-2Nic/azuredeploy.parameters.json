@@ -1,0 +1,30 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmsize": {
+      "value": "DS15_V2"
+    },
+    "adminUser": {
+      "value": "mdh"
+    },
+    "FrontEndNicSubnet": {
+      "value": "fesubnet"
+    },
+    "BackEndNicSubnet": {
+      "value": "besubnet"
+    },
+    "NodeCount": {
+      "value": 1
+    },
+    "DiskCount": {
+      "value": 8
+    },
+    "DiskSize": {
+      "value": 512
+    },
+    "VNET": {
+      "value": "fevnet"
+    }
+  }
+}

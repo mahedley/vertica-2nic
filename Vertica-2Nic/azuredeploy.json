@@ -1,0 +1,206 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vmsize": {
+      "type": "string"
+    },
+    "adminUser": {
+      "type": "string"
+    },
+
+    "adminPassword": {
+      "type": "securestring"
+    },
+    "VNET": {
+      "type": "string"
+    },
+    "FrontEndNicSubnet": {
+      "type": "string"
+    },
+    
+    "BackEndNicSubnet": {
+      "type": "string"
+    },
+    "NodeCount": {
+      "type": "int"
+    },
+    "DiskCount": {
+      "type": "int"
+    },
+    "DiskSize": {
+      "type": "int"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    }
+
+
+  },
+  "variables": {
+    "vmnameprefix": "VertNode",
+    "fenicprefix": "VertNodeFENic",
+    "benicprefix": "VertNodeBENic",
+    "vnetreference": "[resourceId('Microsoft.Network/virtualNetworks/',parameters('VNET'))]",
+    "fesubnetreference": "[concat(variables('vnetreference'), '/subnets/', parameters('FrontEndNicSubnet'))]",
+    "besubnetreference": "[concat(variables('vnetreference'), '/subnets/', parameters('BackEndNicSubnet'))]",
+    "vmsizefull": "[concat('Standard_',parameters('vmsize'))]",
+    "configurescriptScriptFolder": "CustomScripts",
+    "configurescriptScriptFileName": "configurescript.sh"
+
+  },
+  "resources": [
+
+    {
+      "name": "[concat(variables('vmnameprefix'),copyIndex())]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2016-04-30-preview",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "VMCopy",
+        "count": "[parameters('NodeCount')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('fenicprefix'),copyIndex()))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('benicprefix'),copyIndex()))]"
+      ],
+      "properties": {
+        "osProfile": {
+          "computerName": "[concat(variables('vmnameprefix'),copyIndex())]",
+          "adminUsername": "[parameters('adminUser')]",
+          "adminPassword": "[parameters('adminPassword')]"
+        },
+        "hardwareProfile": {
+          "vmSize": "[variables('vmsizefull')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "OpenLogic",
+            "offer": "CentOS",
+            "sku": "7.3",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "fromImage",
+            "managedDisk": {
+              "storageAccountType": "Premium_LRS"
+            }
+          },
+          "copy": [
+            {
+              "name": "dataDisks",
+              "count": "[parameters('DiskCount')]",
+              "input": {
+                "diskSizeGB": "[parameters('DiskSize')]",
+                "lun": "[copyIndex('dataDisks')]",
+                "createOption": "Empty"
+              }
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "properties": {
+                "primary":  true
+              },
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('fenicprefix'),copyIndex()))]"
+            },
+            {
+              "properties": {
+                "primary": false
+              },
+
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', concat(variables('benicprefix'),copyIndex()))]"
+            }
+          ]
+        }
+      },
+      "resources": [
+        {
+          "name": "configurescript",
+          "type": "extensions",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2016-03-30",
+          "dependsOn": [
+            "[resourceId('Microsoft.Compute/virtualMachines', concat(variables('vmnameprefix'),copyIndex()))]"
+          ],
+          "tags": {
+            "displayName": "configurescript"
+          },
+          "properties": {
+            "publisher": "Microsoft.OSTCExtensions",
+            "type": "CustomScriptForLinux",
+            "typeHandlerVersion": "1.4",
+            "autoUpgradeMinorVersion": true,
+            "settings": {
+              "fileUris": [
+                "[concat(parameters('_artifactsLocation'), '/', variables('configurescriptScriptFolder'), '/', variables('configurescriptScriptFileName'), parameters('_artifactsLocationSasToken'))]"
+              ],
+              "commandToExecute": "[concat('sh ', variables('configurescriptScriptFileName'))]"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "[concat(variables('fenicprefix'),copyIndex())]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "FENicCopy",
+        "count": "[parameters('NodeCount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('fesubnetreference')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[concat(variables('benicprefix'),copyIndex())]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2016-09-01",
+      "location": "[resourceGroup().location]",
+      "copy": {
+        "name": "FENicCopy",
+        "count": "[parameters('NodeCount')]"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('besubnetreference')]"
+              },
+              "privateIPAllocationMethod": "Dynamic"
+            }
+          }
+        ]
+      }
+    }
+
+
+
+  ],
+  "outputs": {}
+}
